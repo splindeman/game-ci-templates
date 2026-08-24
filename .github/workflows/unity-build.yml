@@ -1,0 +1,79 @@
+name: Unity Build (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      target-platform:
+        description: "GameCI unity-builder targetPlatform (e.g. Android, StandaloneWindows64, iOS)"
+        required: false
+        type: string
+        default: Android
+      unity-version:
+        description: "Unity version to build with, or 'auto' to read it from the calling project's ProjectSettings"
+        required: false
+        type: string
+        default: auto
+      artifact-name:
+        description: "Name prefix for the uploaded build artifact"
+        required: false
+        type: string
+        default: build
+      build-path:
+        description: "Output directory GameCI writes the build into (per-platform subfolder is added automatically)"
+        required: false
+        type: string
+        default: build
+    secrets:
+      UNITY_LICENSE:
+        required: true
+      UNITY_EMAIL:
+        required: true
+      UNITY_PASSWORD:
+        required: true
+
+jobs:
+  build:
+    name: Build for ${{ inputs.target-platform }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: true
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ inputs.target-platform }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ inputs.target-platform }}-
+            Library-
+
+      - name: Build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: ${{ inputs.unity-version }}
+          targetPlatform: ${{ inputs.target-platform }}
+          buildsPath: ${{ inputs.build-path }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}-${{ inputs.target-platform }}
+          path: ${{ inputs.build-path }}/${{ inputs.target-platform }}
