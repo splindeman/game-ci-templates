@@ -52,8 +52,8 @@ through with `secrets: inherit`, or list them individually if being more selecti
 
 ### Cross-repo access note
 
-This repo is currently **private**. GitHub's cross-repo reusable-workflow access for
-user-owned (non-org) private repos needs to actually be verified end-to-end — see
-`D:\Dev\tools\NOTES.md` for the outcome of the first real test (calling this from
-three-spin-gauntlet). If it doesn't resolve cleanly, the fix is almost certainly making this
-repo public — it holds no game-specific IP, just generic CI config.
+This repo is **public**, deliberately — confirmed by testing that a private repo (like the game
+repos calling this) cannot resolve a reusable workflow hosted in a different *private* repo
+under a personal (non-org) GitHub account. The call just fails to resolve (0 jobs scheduled)
+before anything runs. Since this repo holds no game-specific IP, just generic CI config, public
+is the right call — don't flip it back to private without re-testing.
